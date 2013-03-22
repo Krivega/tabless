@@ -1,0 +1,53 @@
+@import url('http://twitter.github.com/bootstrap/assets/css/bootstrap.css');
+
+#wrapper-demo {
+	width:800px;
+	margin:0 auto;
+}
+
+#wrapper-demo table{
+	border: 1px solid #ddd;
+}
+
+#wrapper-demo #table-sort-td{
+	margin-bottom:50px;
+}
+
+#wrapper-demo table thead tr{
+	font-weight: bold;
+	background: #333;
+	color: white;
+}
+
+#wrapper-demo table tfoot tr{
+	background: #ddd;
+}
+
+#wrapper-demo th {
+	cursor: pointer;
+}
+#wrapper-demo th:hover {
+	background: #08C;
+}
+#wrapper-demo th i{
+	display: inline-block;
+	width: 14px;
+	height: 14px;
+	margin-top: 1px
+}
+
+#wrapper-demo table tbody tr:hover 	td{
+	background: #08C !important;
+	color:#FFF;
+	text-shadow: 0 1px 0 rgba(0, 0, 0, .15);
+}
+
+#wrapper-demo .select-show-rows{
+	width: 60px;
+	margin:0 !important;
+}
+
+#wrapper-demo .input-page{
+	margin:0 !important;
+}
+
