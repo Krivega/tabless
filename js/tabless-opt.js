@@ -30,125 +30,10 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 $(document).ready(function () {
 
-  var jSonData = {
-    "result": [{
-      "id": 1,
-      "date": "1995-03-31",
-      "client": "Mya 3",
-      "amount": 2566,
-      "tax": 69,
-      "total": 1414,
-      "notes": "Dignissim volutpat vulputate."
-    }, {
-      "id": 2,
-      "date": "2008-04-07",
-      "client": "Leah 3",
-      "amount": 2700,
-      "tax": 56,
-      "total": 2578,
-      "notes": "Quis dolore vulputate."
-    }, {
-      "id": 3,
-      "date": "2007-05-14",
-      "client": "Savannah 2",
-      "amount": 2128,
-      "tax": 124,
-      "total": 1703,
-      "notes": "Molestie velit consequat."
-    }, {
-      "id": 4,
-      "date": "2006-07-14",
-      "client": "Claire 1",
-      "amount": 2550,
-      "tax": 9,
-      "total": 1861,
-      "notes": "Hendrerit augue ullamcorper."
-    }, {
-      "id": 5,
-      "date": "2009-07-08",
-      "client": "Ava 2",
-      "amount": 2561,
-      "tax": 61,
-      "total": 2846,
-      "notes": "Nisl blandit blandit."
-    }, {
-      "id": 6,
-      "date": "2011-04-12",
-      "client": "Angelina 3",
-      "amount": 1925,
-      "tax": 128,
-      "total": 1022,
-      "notes": "Dolor te consectetuer."
-    }, {
-      "id": 7,
-      "date": "2002-02-16",
-      "client": "Ava 1",
-      "amount": 437,
-      "tax": 113,
-      "total": 1861,
-      "notes": "Volutpat ex laoreet."
-    }, {
-      "id": 8,
-      "date": "1999-02-21",
-      "client": "Isabelle 1",
-      "amount": 2525,
-      "tax": 36,
-      "total": 2634,
-      "notes": "Eum ut feugait."
-    }, {
-      "id": 9,
-      "date": "2006-09-14",
-      "client": "Camila 1",
-      "amount": 2863,
-      "tax": 130,
-      "total": 1422,
-      "notes": "Odio nonummy lobortis."
-    }, {
-      "id": 10,
-      "date": "1988-02-25",
-      "client": "Jocelyn 2",
-      "amount": 1221,
-      "tax": 86,
-      "total": 2731,
-      "notes": "Zzril consequat feugait."
-    }, {
-      "id": 11,
-      "date": "2007-08-15",
-      "client": "Sydney 1",
-      "amount": 323,
-      "tax": 58,
-      "total": 1144,
-      "notes": "Eum iriure blandit."
-    }, {
-      "id": 12,
-      "date": "2006-10-02",
-      "client": "Gabrielle 2",
-      "amount": 2725,
-      "tax": 17,
-      "total": 1447,
-      "notes": "Et in dolore."
-    }, {
-      "id": 13,
-      "date": "2003-09-01",
-      "client": "Melanie 3",
-      "amount": 1890,
-      "tax": 0,
-      "total": 2452,
-      "notes": "Augue consequat dolore."
-    }, {
-      "id": 14,
-      "date": "2000-10-05",
-      "client": "Avery 2",
-      "amount": 1064,
-      "tax": 92,
-      "total": 1239,
-      "notes": "Vulputate te esse."
-    }]
-  };
-
-
   function Tabless(table) {
+    var self = this;
     this.table = document.getElementById(table);
+    this.$table = $('#'+table);
     this.tbody = this.table.getElementsByTagName('tbody')[0];
     this._allTrs = [];
     this._dataTrs = [];
@@ -202,19 +87,38 @@ $(document).ready(function () {
       this.update();
       return this;
     };
-
-    //заполнение таблицы данными
-    this.update = function (data, sortData, page) {
-      if (data) {
-        this.data = data;
-        this._dataTrToArr();
-        this.data = this._dataTrs;
+    
+    this.init = function (url, dataType, sortData) {
+      if (url && dataType) {
+        this.getData(url, dataType);
       }
-      if (page) this.page = page;
-      
       //выбираем сортировку по данным или по видимым строкам
       if (sortData == true) this._sortData = true;
-
+    };
+    
+    // получение данных с сервера
+    this.getData = function (url, dataType) {
+      $.ajax({
+        dataType: dataType,
+        url: url
+      }).done(function(data) {
+        if(dataType=='xml'){
+          var json = $.xml2json(data).result;
+        }else{
+          json = data.result;
+        };
+        self.data = json;
+        self._dataTrToArr();
+        self.update();
+        self._initEvent();
+      }).fail(function(jqXHR, textStatus) {
+        showAlert( "Request failed: " + textStatus );
+      });;        
+      return this;
+    };
+    
+    //заполнение таблицы данными
+    this.update = function () {
       this.clear();
 
       // вычисляем количество видимых строк
@@ -234,18 +138,18 @@ $(document).ready(function () {
       }
       this.pageStart = pageStart;
       this.pageEnd = pageEnd;
-
+      console.log(this.page, this.pageStart, this.pageEnd);
       // заполняем таблицу данными
-      var html, item;
+      var html = '', item;
       for (var i = this.pageStart; i < this.pageEnd; i++) {
         item = this.data[i];
-        html = '<tr>'
+        html += '<tr>';
         for (var j = 0; j < item.length; j++) {
-          html += '<td>' + item[j] + '</td>'
+          html += '<td>' + item[j] + '</td>';
         }
         html += '</tr>';
-        this.tbody.innerHTML += html;
       };
+      this.tbody.innerHTML = html;
       
       //и сразу же меняем направление сортировки и сортируем, если не сортировка по всем данным
       if (!this._sortData) {
@@ -254,10 +158,10 @@ $(document).ready(function () {
 			}else{
 				this._arrToSortIcon();
 			};
-			
+						
       return this;
     };
-
+    
     // строки в массив
     this._trToArr = function () {
       this._allTrs.length = 0;
@@ -267,7 +171,7 @@ $(document).ready(function () {
       return this;
     };
 
-    //данные в массив
+    //данные в массив для сортировки по всем данным
     this._dataTrToArr = function () {
       this._dataTrs.length = 0;
       var item;
@@ -279,7 +183,8 @@ $(document).ready(function () {
           itemArr.push(item[key])
         }
         this._dataTrs.push(itemArr);
-      }
+      }      
+      this.data = this._dataTrs;
       return this;
     };
 
@@ -338,216 +243,154 @@ $(document).ready(function () {
     
     // иконка сортировки. Пришлось тут включить jquery для краткости
     this._arrToSortIcon = function () {
-			var icon = $('#'+table+' th i');
-			if(icon.length==0){
-				$('#'+table+' 	th').append('<i></i>');
+			var $icon = this.$table.find('th i');
+			if($icon.length==0){
+				this.$table.find('th').append('<i></i>');
 			}
-			icon = $('#'+table+' th i');
-			icon.removeAttr('class');
-			this.curSortUp ? icon[this.curSortCol].setAttribute('class', 'icon-arrow-up icon-white') : icon[this.curSortCol].setAttribute('class', 'icon-arrow-down icon-white');
+			$icon = this.$table.find('th i');
+			$icon.removeAttr('class');
+			this.curSortUp ? $icon[this.curSortCol].setAttribute('class', 'icon-arrow-up icon-white') : $icon[this.curSortCol].setAttribute('class', 'icon-arrow-down icon-white');
 		};
-
+    
+    // функция сортировки даты 
+    this.SORT_DATE = function (value) {
+      return +new Date(value)
+    };
+    
+    //функции сортировки для колонок по типам данных 
+    this.sortTable = function (cellIndex) {        
+      if (cellIndex == 0) {     
+        this.initSort(cellIndex,Number)
+      } else if (cellIndex == 1) {
+        this.initSort(cellIndex,this.SORT_DATE)
+      } else if (cellIndex == 2) {
+        this.initSort(cellIndex,String)
+      } else if (cellIndex == 3) {
+        this.initSort(cellIndex,Number)
+      } else if (cellIndex == 4) {
+        this.initSort(cellIndex,Number)
+      } else if (cellIndex == 5) {
+        this.initSort(cellIndex,Number)
+      } else if (cellIndex == 6) {
+        this.initSort(cellIndex,String)
+      };
+    };
+    //устанавливаем обработчики
+    this._initEvent = function () {
+      this.$table.on('click', 'th', function () {
+        self.sortTable(this.cellIndex);
+      });
+    
+      //на первую страницу
+      this.$table.find(".first-page").on('click', function () {
+        self.firstPage();
+        self.$table.find(".input-page").val(self.page);
+        self.$table.find(".table-view-start").html(self.pageStart + 1);
+        self.$table.find(".table-view-end").html(self.pageEnd);      
+        return false;
+      });
+      
+      //на последнюю
+      this.$table.find(".last-page").on('click', function () {
+        self.lastPage();
+        self.$table.find(".input-page").val(self.page);
+        self.$table.find(".table-view-start").html(self.pageStart + 1);
+        self.$table.find(".table-view-end").html(self.pageEnd);    
+        return false;
+      });
+      
+      //на следующую
+      this.$table.find(".next-page").on('click', function () {
+        self.nextPage();
+        self.$table.find(".input-page").val(self.page);
+        self.$table.find(".table-view-start").html(self.pageStart + 1);
+        self.$table.find(".table-view-end").html(self.pageEnd);    
+        return false;
+      });
+      
+      //на предыдущую
+      this.$table.find(".previous-page").on('click', function () {
+        self.previousPage();
+        self.$table.find(".input-page").val(self.page);
+        self.$table.find(".table-view-start").html(self.pageStart + 1);
+        self.$table.find(".table-view-end").html(self.pageEnd);    
+        return false;
+      });
+      
+      //ввод страницы вручную
+      this.$table.find(".input-page").on('keydown', function (event) {
+        var $this = $(this);
+        if (event.which == 13) {
+          var value = $this.val();
+          $this.blur();
+          self.changePage(value);
+          self.$table.find(".table-view-start").html(self.pageStart + 1);
+          self.$table.find(".table-view-end").html(self.pageEnd);
+    
+          return false;
+        }
+      });
+    
+      //выбор количества отображаемых строк
+      this.$table.find(".select-show-rows").on('change', function () {
+        var $this = $(this);
+        var value = $this.val();
+        self.changeVisibleRows(value);
+        self.$table.find(".input-page").val(self.page);
+        self.$table.find(".table-view-start").html(self.pageStart + 1);
+        self.$table.find(".table-view-end").html(self.pageEnd);
+        self.$table.find(".table-pages").html(self.pages);
+        return false;
+      });
+      
+      //заполнение футера таблицы начальными данными
+      this.$table.find(".table-view-start").html(self.pageStart + 1);
+      this.$table.find(".table-view-end").html(self.pageEnd);
+      this.$table.find(".table-view-amount").html(self.data.length);
+      this.$table.find(".table-pages").html(self.pages);
+            
+    };
+    
     this.clear = function () {
       this.tbody.innerHTML='';
       return this;
     };
   }
 
-  // функция сортировки даты в прототип конструктора
-  Tabless.prototype.SORT_DATE = function (value) {
-    return +new Date(value)
+var delay = (function(){
+  var timer = 0;
+  return function(callback, ms){
+    clearTimeout (timer);
+    timer = setTimeout(callback, ms);
   };
+})();
 
-  
-  //функции сортировки для колонок по типам данных в прототип конструктора
-  Tabless.prototype.sortTable = function (cellIndex) {
-				
-    if (cellIndex == 0) {			
-      this.initSort(cellIndex,Number)
-    } else if (cellIndex == 1) {
-      this.initSort(cellIndex,this.SORT_DATE)
-    } else if (cellIndex == 2) {
-      this.initSort(cellIndex,String)
-    } else if (cellIndex == 3) {
-      this.initSort(cellIndex,Number)
-    } else if (cellIndex == 4) {
-      this.initSort(cellIndex,Number)
-    } else if (cellIndex == 5) {
-      this.initSort(cellIndex,Number)
-    } else if (cellIndex == 6) {
-      this.initSort(cellIndex,String)
-    };
-	};
+function showAlert(msg, type, callback) {
+    if (!type) { var type = 'alert-error' }
+    var alert = '<div class="alert '+type+' fade in">\
+    <button type="button" class="close" data-dismiss="alert">×</button>'
+    +'<span class="alert-text">'+msg+'</span></div>'
+    $('#alert-place').html(alert);
+    $(window).scrollTop(0);
+    $('.alert').alert();
+    if (callback) { delay(callback, 3000);
+    } else { delay(hideAlert, 3000); }
+    return false;
+}
 
+function hideAlert() { $('.alert').alert('close'); }
 
 
 /***********************************************************************/
-	//таблица с сортировкой по видимым данным
-  tableSortTd = new Tabless("table-sort-td");
+	//таблица с сортировкой по отображаемым данным
+  var tableSortTd = new Tabless("table-sort-td");
 
-  tableSortTd.update(jSonData.result);
+  tableSortTd.init('data.xml', 'xml');
 
-	//сортировка по клику на заголовок
-  $("#table-sort-td").on('click', 'th', function () {
-		tableSortTd.sortTable(this.cellIndex);
-  });			
-	
-	//заполнение футера таблицы начальными данными
-  $("#table-sort-td .table-view-start").html(tableSortTd.pageStart + 1);
-  $("#table-sort-td .table-view-end").html(tableSortTd.pageEnd);
-  $("#table-sort-td .table-view-amount").html(tableSortTd.data.length);
-  $("#table-sort-td .table-pages").html(tableSortTd.pages);
-
-	//на первую страницу
-  $("#table-sort-td .first-page").on('click', function () {
-
-    tableSortTd.firstPage();
-    $("#table-sort-td .input-page").val(tableSortTd.page);
-    $("#table-sort-td .table-view-start").html(tableSortTd.pageStart + 1);
-    $("#table-sort-td .table-view-end").html(tableSortTd.pageEnd);
-    
-    return false;
-  });
-
-	//на последнюю
-  $("#table-sort-td .last-page").on('click', function () {
-    tableSortTd.lastPage();
-    $("#table-sort-td .input-page").val(tableSortTd.page);
-    $("#table-sort-td .table-view-start").html(tableSortTd.pageStart + 1);
-    $("#table-sort-td .table-view-end").html(tableSortTd.pageEnd);
-
-    return false;
-  });
-	
-	//на следующую
-  $("#table-sort-td .next-page").on('click', function () {
-    tableSortTd.nextPage();
-    $("#table-sort-td .input-page").val(tableSortTd.page);
-    $("#table-sort-td .table-view-start").html(tableSortTd.pageStart + 1);
-    $("#table-sort-td .table-view-end").html(tableSortTd.pageEnd);
-
-    return false;
-  });
-
-	//на предыдущую
-  $("#table-sort-td .previous-page").on('click', function () {
-    tableSortTd.previousPage();
-    $("#table-sort-td .input-page").val(tableSortTd.page);
-    $("#table-sort-td .table-view-start").html(tableSortTd.pageStart + 1);
-    $("#table-sort-td .table-view-end").html(tableSortTd.pageEnd);
-
-    return false;
-  });
-	
-	//ввод страницы вручную
-  $("#table-sort-td .input-page").on('keydown', function () {
-    var $this = $(this);
-    if (event.which == 13) {
-      var value = $this.val();
-      $this.blur();
-      tableSortTd.changePage(value);
-      $("#table-sort-td .table-view-start").html(tableSortTd.pageStart + 1);
-      $("#table-sort-td .table-view-end").html(tableSortTd.pageEnd);
-
-      return false;
-    }
-  });
-
-	//выбор количества отображаемых строк
-  $("#table-sort-td .select-show-rows").on('change', function () {
-    var $this = $(this);
-    var value = $this.val();
-    tableSortTd.changeVisibleRows(value);
-    $("#table-sort-td .input-page").val(tableSortTd.page);
-    $("#table-sort-td .table-view-start").html(tableSortTd.pageStart + 1);
-    $("#table-sort-td .table-view-end").html(tableSortTd.pageEnd);
-    $("#table-sort-td .table-pages").html(tableSortTd.pages);
-    return false;
-  });
-  
 
 /***********************************************************************/
-	//таблица с сортировкой по всем данным, не только по видимым
-	tableSortData = new Tabless("table-sort-data");
+	//таблица с сортировкой по всем данным, не только по отображаемым
+	var tableSortData = new Tabless("table-sort-data");
 
-  tableSortData.update(jSonData.result, true)
-
-	//сортировка по клику на заголовок
-  $("#table-sort-data").on('click', 'th', function () {
-		tableSortData.sortTable(this.cellIndex);
-  });			
-	
-	//заполнение футера таблицы начальными данными
-  $("#table-sort-data .table-view-start").html(tableSortData.pageStart + 1);
-  $("#table-sort-data .table-view-end").html(tableSortData.pageEnd);
-  $("#table-sort-data .table-view-amount").html(tableSortData.data.length);
-  $("#table-sort-data .table-pages").html(tableSortData.pages);
-
-	//на первую страницу
-  $("#table-sort-data .first-page").on('click', function () {
-
-    tableSortData.firstPage();
-    $("#table-sort-data .input-page").val(tableSortData.page);
-    $("#table-sort-data .table-view-start").html(tableSortData.pageStart + 1);
-    $("#table-sort-data .table-view-end").html(tableSortData.pageEnd);
-    
-    return false;
-  });
-
-	//на последнюю
-  $("#table-sort-data .last-page").on('click', function () {
-    tableSortData.lastPage();
-    $("#table-sort-data .input-page").val(tableSortData.page);
-    $("#table-sort-data .table-view-start").html(tableSortData.pageStart + 1);
-    $("#table-sort-data .table-view-end").html(tableSortData.pageEnd);
-
-    return false;
-  });
-	
-	//на следующую
-  $("#table-sort-data .next-page").on('click', function () {
-    tableSortData.nextPage();
-    $("#table-sort-data .input-page").val(tableSortData.page);
-    $("#table-sort-data .table-view-start").html(tableSortData.pageStart + 1);
-    $("#table-sort-data .table-view-end").html(tableSortData.pageEnd);
-
-    return false;
-  });
-
-	//на предыдущую
-  $("#table-sort-data .previous-page").on('click', function () {
-    tableSortData.previousPage();
-    $("#table-sort-data .input-page").val(tableSortData.page);
-    $("#table-sort-data .table-view-start").html(tableSortData.pageStart + 1);
-    $("#table-sort-data .table-view-end").html(tableSortData.pageEnd);
-
-    return false;
-  });
-	
-	//ввод страницы вручную
-  $("#table-sort-data .input-page").on('keydown', function () {
-    var $this = $(this);
-    if (event.which == 13) {
-      var value = $this.val();
-      $this.blur();
-      tableSortData.changePage(value);
-      $("#table-sort-data .table-view-start").html(tableSortData.pageStart + 1);
-      $("#table-sort-data .table-view-end").html(tableSortData.pageEnd);
-
-      return false;
-    }
-  });
-
-	//выбор количества отображаемых строк
-  $("#table-sort-data .select-show-rows").on('change', function () {
-    var $this = $(this);
-    var value = $this.val();
-    tableSortData.changeVisibleRows(value);
-    $("#table-sort-data .input-page").val(tableSortData.page);
-    $("#table-sort-data .table-view-start").html(tableSortData.pageStart + 1);
-    $("#table-sort-data .table-view-end").html(tableSortData.pageEnd);
-    $("#table-sort-data .table-pages").html(tableSortData.pages);
-    return false;
-  });
-
+  tableSortData.init('data.json', 'json', true);	
 });

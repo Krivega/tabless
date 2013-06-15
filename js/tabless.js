@@ -234,7 +234,7 @@ $(document).ready(function () {
       }
       this.pageStart = pageStart;
       this.pageEnd = pageEnd;
-
+      console.log(this.page, this.pageStart, this.pageEnd);
       // заполняем таблицу данными
       var html, item;
       for (var i = this.pageStart; i < this.pageEnd; i++) {
