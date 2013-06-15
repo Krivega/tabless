@@ -100,7 +100,8 @@ $(document).ready(function () {
     this.getData = function (url, dataType) {
       $.ajax({
         dataType: dataType,
-        url: url
+        url: url,
+        //crossDomain: true
       }).done(function(data) {
         if(dataType=='xml'){
           var json = $.xml2json(data).result;
@@ -138,7 +139,6 @@ $(document).ready(function () {
       }
       this.pageStart = pageStart;
       this.pageEnd = pageEnd;
-      console.log(this.page, this.pageStart, this.pageEnd);
       // заполняем таблицу данными
       var html = '', item;
       for (var i = this.pageStart; i < this.pageEnd; i++) {
@@ -171,7 +171,7 @@ $(document).ready(function () {
       return this;
     };
 
-    //данные в массив для сортировки по всем данным
+    //данные в массив
     this._dataTrToArr = function () {
       this._dataTrs.length = 0;
       var item;
@@ -357,6 +357,8 @@ $(document).ready(function () {
     };
   }
 
+
+//Единая, переопределяемая задержка для действий или функций
 var delay = (function(){
   var timer = 0;
   return function(callback, ms){
@@ -365,6 +367,7 @@ var delay = (function(){
   };
 })();
 
+// Общие функции вывода сообщений
 function showAlert(msg, type, callback) {
     if (!type) { var type = 'alert-error' }
     var alert = '<div class="alert '+type+' fade in">\
